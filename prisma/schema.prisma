@@ -22,7 +22,7 @@ model Users {
   status          String     @map("account_status") // 계정 상태
 
   characters      Character[] // 여러 캐릭터를 보유할 수 있음
-  @@map(Users)
+  @@map("Users")
 }
 
 model Character {
@@ -34,8 +34,8 @@ model Character {
   status      String     @map("character_status") // 캐릭터 상태
 
   user        Users      @relation(fields: [userId], references: [id])
-  inventory   Inventory[] @map("character_inventory") // 캐릭터의 인벤토리
-  equippedItems EquippedItem[] @map("character_equipped_items") // 캐릭터가 장착한 아이템들
+  inventory   Inventory[] // 캐릭터의 인벤토리
+  equippedItems EquippedItem[]  // 캐릭터가 장착한 아이템들
   @@map("Character")
 }
 
@@ -50,8 +50,8 @@ model Item {
   createdAt       DateTime   @default(now()) @map("item_created_at") // 아이템 생성 시간
   updatedAt       DateTime   @updatedAt @map("item_updated_at") // 아이템 수정 시간
 
-  inventories     Inventory[] @map("item_inventory") // 아이템이 인벤토리에 있을 때 연결
-  equippedItems   EquippedItem[] @map("item_equipped_items") // 아이템이 장착될 때 연결
+  inventories     Inventory[] // 아이템이 인벤토리에 있을 때 연결
+  equippedItems   EquippedItem[]  // 아이템이 장착될 때 연결
   @@map("Item")
 }
 
@@ -65,7 +65,7 @@ model Inventory {
 
   character   Character  @relation(fields: [characterId], references: [id])
   item        Item       @relation(fields: [itemId], references: [id])
-  @@map("Inventory)
+  @@map("Inventory")
 }
 
 model EquippedItem {
