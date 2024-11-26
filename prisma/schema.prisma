@@ -33,6 +33,10 @@ model Character {
   createdAt   DateTime   @default(now()) @map("character_created_at") // 캐릭터 생성 시간
   status      String     @map("character_status") // 캐릭터 상태
 
+  attack      Int        @default(10) // 기본 공격력
+  defense     Int        @default(10) // 기본 방어력
+  health      Int        @default(100) // 기본 체력
+
   user        Users      @relation(fields: [userId], references: [id])
   inventory   Inventory[] // 캐릭터의 인벤토리
   equippedItems EquippedItem[]  // 캐릭터가 장착한 아이템들
