@@ -116,21 +116,74 @@ router.post("/characters", authMiddleware, async (req, res, next) => {
   }
 });
 
+// 캐릭터 삭제 API
+router.delete("/characters/:characterId", authMiddleware, async (req, res, next) => {
+  try {
+    const { characterId } = req.params;  // URL 파라미터로 전달된 캐릭터 ID
+    const { id: userId } = req.user;    // 로그인한 유저의 ID (authMiddleware에서 제공)
 
-/*이용자 정보 조회*/
-router.get("/users", authMiddleware, async (req, res, next) => {
-  const { id } = req.user;
+    // 해당 캐릭터가 해당 유저의 것인지 확인
+    const character = await prisma.character.findFirst({
+      where: {
+        id: +characterId,   // 캐릭터 ID가 요청된 캐릭터 ID와 일치하는지
+        userId: userId,     // 캐릭터의 유저 ID가 로그인한 유저 ID와 일치하는지
+      },
+    });
 
-  const user = await prisma.users.findFirst({
-    where: { id: +id },
-    select: {
-      id: true,
-      email: true,
-      createdAt: true,
-    },
-  });
+    // 캐릭터가 존재하지 않으면 오류 반환
+    if (!character) {
+      return res.status(404).json({ message: "캐릭터를 찾을 수 없습니다." });
+    }
 
-  return res.status(200).json({ data: user });
+    // 캐릭터 삭제
+    await prisma.character.delete({
+      where: {
+        id: +characterId,   // 삭제할 캐릭터의 ID
+      },
+    });
+
+    return res.status(200).json({ message: "캐릭터가 삭제되었습니다." });
+  } catch (error) {
+    // 에러 핸들링
+    next(error);
+  }
 });
+
+
+router.get("/users", authMiddleware, async (req, res, next) => {
+  const { id } = req.user; // 로그인한 유저의 ID
+
+  try {
+    // 유저 정보와 연결된 캐릭터 정보 조회
+    const user = await prisma.users.findFirst({
+      where: { id: +id }, // 로그인한 유저의 ID로 조회
+      select: {
+        id: true,
+        email: true,
+        createdAt: true,
+        characters: { // 해당 유저의 캐릭터들 조회
+          select: {
+            id: true,
+            name: true,
+            money: true,
+            status: true,
+            createdAt: true,
+          },
+        },
+      },
+    });
+
+    // 유저가 존재하지 않으면 404 오류 반환
+    if (!user) {
+      return res.status(404).json({ message: "유저를 찾을 수 없습니다." });
+    }
+
+    // 유저와 그에 해당하는 캐릭터 정보 응답
+    return res.status(200).json({ data: user });
+  } catch (error) {
+    next(error);
+  }
+});
+
 
 export default router;
