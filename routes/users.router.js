@@ -89,6 +89,17 @@ router.post("/characters", authMiddleware, async (req, res, next) => {
     // 로그인한 유저의 id 가져오기
     const { id: userId } = req.user;
 
+    // 캐릭터 이름 중복 확인
+    const existingCharacter = await prisma.character.findFirst({
+      where: {
+        name,     // 입력받은 이름
+      },
+    });
+
+    if (existingCharacter) {
+      return res.status(409).json({ message: "이미 존재하는 캐릭터 이름입니다." });
+    }
+
     // 캐릭터 추가
     const character = await prisma.character.create({
       data: {
@@ -104,6 +115,7 @@ router.post("/characters", authMiddleware, async (req, res, next) => {
     next(error);
   }
 });
+
 
 /*이용자 정보 조회*/
 router.get("/users", authMiddleware, async (req, res, next) => {

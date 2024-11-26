@@ -28,7 +28,7 @@ model Users {
 model Character {
   id          Int        @id @default(autoincrement()) @map("character_id") // 캐릭터 고유 ID
   userId      Int        @map("user_id") // Users 모델과의 관계
-  name        String     @map("character_name") // 캐릭터 이름
+  name        String     @unique @map("character_name") // 캐릭터 이름
   money       Int        @default(0) @map("character_money") // 캐릭터의 보유 돈
   createdAt   DateTime   @default(now()) @map("character_created_at") // 캐릭터 생성 시간
   status      String     @map("character_status") // 캐릭터 상태
