@@ -15,7 +15,7 @@ datasource db {
 
 model Users {
   id              Int        @id @default(autoincrement()) @map("user_id") // 사용자 고유 ID
-  username        String     @unique @map("user_name") // 사용자명
+  username        String     @map("user_name") // 사용자명
   email           String     @unique @map("user_email") // 이메일
   password        String     @map("user_password") // 암호화된 비밀번호
   createdAt       DateTime   @default(now()) @map("created_at") // 계정 생성 시간
@@ -46,7 +46,7 @@ model Character {
 model Item {
   id              Int        @id @default(autoincrement()) @map("item_id") // 아이템 고유 ID
   name            String     @map("item_name") // 아이템 이름
-  description     String     @map("item_description") // 아이템 설명
+  description     String     @map("item_description") @db.Text // 아이템 설명
   type            String     @map("item_type") // 아이템 종류 (무기, 방어구, 소비 아이템 등)
   rarity          String     @map("item_rarity") // 아이템 희귀도
   stats           Json       @map("item_stats") // 아이템 능력치
