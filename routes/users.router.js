@@ -39,13 +39,11 @@ router.post("/sign-up", async (req, res, next) => {
     });
 
     return res.status(201).json({ message: "회원가입이 완료되었습니다." });
-
   } catch (error) {
     // 에러 핸들러로 에러를 전달합니다.
     next(error);
   }
 });
-
 
 /** 로그인 API **/
 router.post("/sign-in", async (req, res, next) => {
@@ -66,7 +64,7 @@ router.post("/sign-in", async (req, res, next) => {
     }
 
     // JWT 생성
-    const token = jwt.sign({ userId: user.userId }, process.env.JWT_KEY);
+    const token = jwt.sign({ userId: user.id }, process.env.JWT_KEY);
 
     // 쿠키에 JWT 토큰 저장
     res.cookie("authorization", `Bearer ${token}`);
@@ -74,10 +72,23 @@ router.post("/sign-in", async (req, res, next) => {
     // 로그인 성공 응답
     return res.status(200).json({ message: "로그인이 완료되었습니다." });
   } catch (error) {
-
     next(error);
   }
 });
 
+router.get("/users", authMiddleware, async (req, res, next) => {
+  const { id } = req.user;
+
+  const user = await prisma.users.findFirst({
+    where: { id: +id },
+    select: {
+      id: true,
+      email: true,
+      createdAt: true,
+    },
+  });
+
+  return res.status(200).json({ data: user });
+});
 
 export default router;

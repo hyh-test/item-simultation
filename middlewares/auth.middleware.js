@@ -15,7 +15,7 @@ export default async function (req, res, next) {
     const userId = decodedToken.userId;
 
     const user = await prisma.users.findFirst({
-      where: { userId: +userId },
+      where: { id: +userId },
     });
     if (!user) {
       res.clearCookie("authorization");
