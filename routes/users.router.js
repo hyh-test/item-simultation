@@ -76,6 +76,36 @@ router.post("/sign-in", async (req, res, next) => {
   }
 });
 
+/*캐릭터 생성*/
+router.post("/characters", authMiddleware, async (req, res, next) => {
+  try {
+    const { name } = req.body; // 캐릭터 이름
+
+    // 이름이 없으면 오류 반환
+    if (!name) {
+      return res.status(400).json({ message: "캐릭터 이름을 입력해 주세요." });
+    }
+
+    // 로그인한 유저의 id 가져오기
+    const { id: userId } = req.user;
+
+    // 캐릭터 추가
+    const character = await prisma.character.create({
+      data: {
+        userId,  // 로그인한 유저의 ID
+        name,    // 입력받은 이름
+        money: 100000,  // 기본 금액 100000
+        status: "active", // 캐릭터 상태 기본값 'active'
+      },
+    });
+
+    return res.status(201).json({ message: "캐릭터가 성공적으로 추가되었습니다.", data: character });
+  } catch (error) {
+    next(error);
+  }
+});
+
+/*이용자 정보 조회*/
 router.get("/users", authMiddleware, async (req, res, next) => {
   const { id } = req.user;
 
