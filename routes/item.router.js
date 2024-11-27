@@ -1,14 +1,12 @@
 import express from "express";
-import bcrypt from "bcrypt";
 import { prisma } from "../utils/prisma/index.js";
-import jwt from "jsonwebtoken";
-import authMiddleware from "../middlewares/auth.middleware.js";
 import dotenv from "dotenv"; // dotenv 패키지 불러오기
 
 dotenv.config();
 
 const router = express.Router();
 
+//아이템 생성
 router.post("/create", async (req, res, next) => {
   const { name, price, rarity, stats, type, description } = req.body;
 

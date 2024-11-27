@@ -127,6 +127,7 @@ router.post("/characters", authMiddleware, async (req, res, next) => {
   }
 });
 
+//캐릭터 삭제 
 router.delete(
   "/characters/:characterId",
   authMiddleware,
@@ -213,7 +214,7 @@ router.get(
   },
 );
 
-/*유저 정보 api */
+/* 유저 정보 api */
 router.get("/users", authMiddleware, async (req, res, next) => {
   const { id } = req.user; // 로그인한 유저의 ID
 
