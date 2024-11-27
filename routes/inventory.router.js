@@ -34,9 +34,9 @@ router.get("/:characterId", authMiddleware, async (req, res, next) => {
         characterId: +characterId, // 캐릭터의 ID와 일치하는 인벤토리 데이터 조회
       },
       select: {
-        id: true,
         item: {
           select: {
+            id: true,
             name: true,
           },
         },

@@ -53,33 +53,66 @@ router.post("/buy/:characterId", authMiddleware, async (req, res, next) => {
       throw error;
     }
 
-    // 5. 아이템 구매 (아이템을 인벤토리에 추가)
-    const updatedInventory = await prisma.inventory.create({
-      data: {
+    // 5. 아이템이 이미 인벤토리에 존재하는지 확인
+    const existingInventory = await prisma.inventory.findFirst({
+      where: {
         characterId: character.id,
         itemId: item.id,
-        quantity: quantity,
       },
     });
 
-    // 6. 캐릭터의 돈 차감
-    const updatedCharacter = await prisma.character.update({
-      where: { id: character.id },
-      data: {
-        money: character.money - item.price * quantity,
-      },
-    });
+    if (existingInventory) {
+      // 5.1. 이미 존재하면 수량만 업데이트
+      const updatedInventory = await prisma.inventory.update({
+        where: {
+          id: existingInventory.id,
+        },
+        data: {
+          quantity: existingInventory.quantity + quantity, // 기존 수량에 추가
+        },
+      });
 
-    return res.status(200).json({
-      message: "아이템을 성공적으로 구매했습니다.",
-      updatedCharacter,
-      updatedInventory,
-    });
+      // 6. 캐릭터의 돈 차감
+      const updatedCharacter = await prisma.character.update({
+        where: { id: character.id },
+        data: {
+          money: character.money - item.price * quantity,
+        },
+      });
+
+      return res.status(200).json({
+        message: "아이템을 성공적으로 구매했습니다.",
+        updatedCharacter,
+        updatedInventory,
+      });
+    } else {
+      // 5.2. 존재하지 않으면 새로 추가
+      const updatedInventory = await prisma.inventory.create({
+        data: {
+          characterId: character.id,
+          itemId: item.id,
+          quantity: quantity,
+        },
+      });
+
+      // 6. 캐릭터의 돈 차감
+      const updatedCharacter = await prisma.character.update({
+        where: { id: character.id },
+        data: {
+          money: character.money - item.price * quantity,
+        },
+      });
+
+      return res.status(200).json({
+        message: "아이템을 성공적으로 구매했습니다.",
+        updatedCharacter,
+        updatedInventory,
+      });
+    }
   } catch (error) {
     next(error); // 에러 핸들러로 전달
   }
 });
-
 //아이템 판매
 router.patch("/sell/:characterId", authMiddleware, async (req, res, next) => {
   const { itemId, quantity } = req.body; // 판매하려는 아이템 ID와 수량

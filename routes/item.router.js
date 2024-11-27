@@ -8,7 +8,8 @@ const router = express.Router();
 
 //아이템 생성
 router.post("/create", async (req, res, next) => {
-  const { name, price, rarity, stats, type, description } = req.body;
+  const { name, price, rarity, attack, defense, health, type, description } =
+    req.body;
 
   try {
     // 트랜잭션을 사용하여 여러 작업을 원자적으로 처리
@@ -30,7 +31,9 @@ router.post("/create", async (req, res, next) => {
           name, // 아이템 이름
           price, // 아이템 가격
           rarity, // 아이템 레어도
-          stats, // 아이템 능력치
+          attack, // 아이템 공격력
+          defense, // 아이템 방어력
+          health, // 아이템 체력
           type, // 아이템 타입
           description, // 아이템 설명
         },
@@ -50,7 +53,7 @@ router.post("/create", async (req, res, next) => {
 /*아이템 수정*/
 router.patch("/:itemId", async (req, res, next) => {
   const { itemId } = req.params;
-  const { name, description, price, rarity, stats } = req.body;
+  const { name, description, rarity, attack, defense, health } = req.body;
 
   try {
     // 트랜잭션을 사용하여 아이템 수정
@@ -63,15 +66,21 @@ router.patch("/:itemId", async (req, res, next) => {
         throw new Error("아이템을 찾을 수 없습니다.");
       }
 
+      // 가격 수정은 불가하므로 가격을 요청 본문에서 제외
+      if (req.body.price) {
+        throw new Error("가격은 수정할 수 없습니다.");
+      }
+
       // 아이템 업데이트
       const updatedItem = await prisma.item.update({
         where: { id: +itemId },
         data: {
           name: name || itemToUpdate.name,
           description: description || itemToUpdate.description,
-          price: price || itemToUpdate.price,
           rarity: rarity || itemToUpdate.rarity,
-          stats: stats || itemToUpdate.stats,
+          attack: attack ?? itemToUpdate.attack,
+          defense: defense ?? itemToUpdate.defense,
+          health: health ?? itemToUpdate.health,
         },
       });
 
@@ -84,10 +93,6 @@ router.patch("/:itemId", async (req, res, next) => {
   } catch (error) {
     next(error); // 에러 핸들러로 에러 전달
   }
-
-  return res
-    .status(200)
-    .json({ message: "아이템이 성공적으로 수정되었습니다." });
 });
 
 /*아이템 조회*/
