@@ -4,6 +4,7 @@ import UsersRouter from "./routes/users.router.js";
 import characterRouter from "./routes/character.router.js";
 import itemRouter from "./routes/item.router.js";
 import itemshopRouter from "./routes/itemshop.router.js";
+import inventoryRouter from "./routes/inventory.router.js";
 import LogMiddleware from "./middlewares/log.middleware.js";
 import ErrorHandlingMiddleware from "./middlewares/auth.middleware.js";
 
@@ -17,6 +18,7 @@ app.use("/api", UsersRouter);
 app.use("/api/item", itemRouter);
 app.use("/api/itemshop", itemshopRouter);
 app.use("/api/character", characterRouter);
+app.use("/api/inventory", inventoryRouter);
 
 app.use(ErrorHandlingMiddleware);
 
