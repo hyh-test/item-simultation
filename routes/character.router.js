@@ -127,4 +127,57 @@ router.get("/:characterId", authMiddleware, async (req, res, next) => {
   }
 });
 
+
+//캐릭터 돈 추가 api 
+router.patch("/money/:characterId", authMiddleware, async (req, res, next) => {
+  const characterId = parseInt(req.params.characterId); // URL 파라미터에서 캐릭터 ID를 받음
+  const userId = req.user.id; // 인증된 사용자의 ID (authMiddleware에서 설정됨)
+
+  const addMoney = 100; // 고정된 추가 금액 100원
+
+  try {
+    // 1. 요청한 캐릭터가 존재하는지 확인
+    const character = await prisma.character.findUnique({
+      where: {
+        id: characterId,
+      },
+    });
+
+    // 캐릭터가 존재하지 않으면
+    if (!character) {
+      const error = new Error("캐릭터가 없습니다.");
+      error.statusCode = 404; // 캐릭터가 없으면 404 상태 코드
+      throw error;
+    }
+
+    // 2. 캐릭터가 현재 로그인된 사용자의 캐릭터인지 확인
+    if (character.userId !== userId) {
+      const error = new Error("이 캐릭터는 사용자의 것이 아닙니다.");
+      error.statusCode = 403; // 사용자의 것이 아니면 403 상태 코드
+      throw error;
+    }
+
+    // 3. 현재 금액 저장
+    const currentMoney = character.money;
+
+    // 4. 돈 추가
+    const updatedCharacter = await prisma.character.update({
+      where: { id: character.id },
+      data: {
+        money: currentMoney + addMoney,  // 고정된 100원을 추가
+      },
+    });
+
+    // 5. 응답 반환: 추가 전 금액과 추가 후 금액을 포함한 메시지
+    return res.status(200).json({
+      message: `${addMoney}원이 추가되어서, 현재 금액은 ${currentMoney}에서 ${updatedCharacter.money}가 되었습니다.`,
+      updatedCharacter,
+    });
+  } catch (error) {
+    next(error); // 에러 핸들러로 전달
+  }
+});
+
+
+
 export default router;
