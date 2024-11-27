@@ -1,6 +1,7 @@
 import express from "express";
 import cookieParser from "cookie-parser";
 import UsersRouter from "./routes/users.router.js";
+import characterRouter from "./routes/character.router.js";
 import itemRouter from "./routes/item.router.js";
 import itemshopRouter from "./routes/itemshop.router.js";
 import LogMiddleware from "./middlewares/log.middleware.js";
@@ -15,6 +16,8 @@ app.use(cookieParser());
 app.use("/api", UsersRouter);
 app.use("/api/item", itemRouter);
 app.use("/api/itemshop", itemshopRouter);
+app.use("/api/character", characterRouter);
+
 app.use(ErrorHandlingMiddleware);
 
 app.listen(PORT, () => {
