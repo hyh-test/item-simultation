@@ -13,20 +13,18 @@ const router = express.Router();
 router.post("/sign-up", async (req, res, next) => {
   const { email, password, username } = req.body;
 
-  // 트랜잭션을 사용하여 Read Committed 격리 수준을 설정
-  const transaction = await prisma.$transaction(
-    async (prisma) => {
+  try {
+    // 트랜잭션을 사용하여 여러 작업을 원자적으로 처리
+    const result = await prisma.$transaction(async (prisma) => {
       // 이메일 중복 체크
       const isExistUser = await prisma.users.findFirst({
-        where: {
-          email,
-        },
+        where: { email },
       });
 
       if (isExistUser) {
         const error = new Error("이미 존재하는 이메일입니다.");
         error.status = 409; // Conflict
-        throw error; // 트랜잭션을 롤백하려면 throw error로 예외를 던져야 합니다.
+        throw error; // 트랜잭션을 롤백하려면 예외를 던져야 합니다.
       }
 
       // 사용자 비밀번호를 암호화합니다.
@@ -42,15 +40,16 @@ router.post("/sign-up", async (req, res, next) => {
         },
       });
 
-      return user;
-    },
-    {
-      isolation: prisma.TransactionIsolationLevel.ReadCommitted, // Read Committed 격리 수준 설정
-    },
-  );
+      return user; // 트랜잭션 성공 시 반환할 데이터
+    });
 
-  // 트랜잭션 성공 후
-  return res.status(201).json({ message: "회원가입이 완료되었습니다." });
+    // 성공적인 회원가입 처리
+    return res
+      .status(201)
+      .json({ message: "회원가입이 완료되었습니다.", data: result });
+  } catch (error) {
+    next(error); // 에러 핸들러로 에러 전달
+  }
 });
 
 /** 로그인 API **/
@@ -93,39 +92,35 @@ router.post("/characters", authMiddleware, async (req, res, next) => {
   const { id: userId } = req.user;
 
   try {
-    const transaction = await prisma.$transaction(
-      async (prisma) => {
-        // 캐릭터 이름 중복 체크
-        const existingCharacter = await prisma.character.findFirst({
-          where: { name },
-        });
+    // 트랜잭션을 사용하여 캐릭터 생성
+    const result = await prisma.$transaction(async (prisma) => {
+      // 캐릭터 이름 중복 체크
+      const existingCharacter = await prisma.character.findFirst({
+        where: { name },
+      });
 
-        if (existingCharacter) {
-          const error = new Error("이미 존재하는 캐릭터 이름입니다.");
-          error.status = 409; // Conflict
-          throw error;
-        }
+      if (existingCharacter) {
+        const error = new Error("이미 존재하는 캐릭터 이름입니다.");
+        error.status = 409; // Conflict
+        throw error; // 트랜잭션 롤백
+      }
 
-        // 새 캐릭터 생성
-        const character = await prisma.character.create({
-          data: {
-            userId,
-            name,
-            money: 100000, // 기본 금액 100000
-            status: "active",
-          },
-        });
+      // 새 캐릭터 생성
+      const character = await prisma.character.create({
+        data: {
+          userId,
+          name,
+          money: 100000, // 기본 금액 100000
+          status: "active",
+        },
+      });
 
-        return character;
-      },
-      {
-        isolation: prisma.TransactionIsolationLevel.ReadCommitted, // Read Committed
-      },
-    );
+      return character;
+    });
 
     return res.status(201).json({
       message: "캐릭터가 성공적으로 추가되었습니다.",
-      data: transaction,
+      data: result,
     });
   } catch (error) {
     next(error);

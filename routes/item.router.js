@@ -9,46 +9,43 @@ dotenv.config();
 
 const router = express.Router();
 
-//아이템 생성 api
 router.post("/create", async (req, res, next) => {
   const { name, price, rarity, stats, type, description } = req.body;
 
   try {
-    const transaction = await prisma.$transaction(
-      async (prisma) => {
-        // 아이템 이름 중복 체크
-        const isExistItem = await prisma.item.findFirst({
-          where: { name },
-        });
+    // 트랜잭션을 사용하여 여러 작업을 원자적으로 처리
+    const result = await prisma.$transaction(async (prisma) => {
+      // 아이템 이름 중복 체크
+      const isExistItem = await prisma.item.findFirst({
+        where: { name },
+      });
 
-        if (isExistItem) {
-          const error = new Error("이미 존재하는 아이템 이름입니다.");
-          error.status = 409; // Conflict
-          throw error;
-        }
+      if (isExistItem) {
+        const error = new Error("이미 존재하는 아이템 이름입니다.");
+        error.status = 409; // Conflict
+        throw error; // 트랜잭션을 롤백하려면 예외를 던져야 합니다.
+      }
 
-        // 아이템 생성
-        const item = await prisma.item.create({
-          data: {
-            name, // 아이템 이름
-            price, // 아이템 가격
-            rarity, // 아이템 레어도
-            stats, // 아이템 능력치
-            type, // 아이템 타입
-            description, // 아이템 설명
-          },
-        });
+      // 아이템 생성
+      const item = await prisma.item.create({
+        data: {
+          name, // 아이템 이름
+          price, // 아이템 가격
+          rarity, // 아이템 레어도
+          stats, // 아이템 능력치
+          type, // 아이템 타입
+          description, // 아이템 설명
+        },
+      });
 
-        return item;
-      },
-      {
-        isolation: prisma.TransactionIsolationLevel.ReadCommitted, // Read Committed
-      },
-    );
+      return item;
+    });
 
-    return res.status(201).json({ message: "아이템이 생성되었습니다." });
+    return res
+      .status(201)
+      .json({ message: "아이템이 생성되었습니다.", data: result });
   } catch (error) {
-    next(error);
+    next(error); // 에러 핸들러로 에러 전달
   }
 });
 
@@ -57,8 +54,9 @@ router.patch("/:itemId", async (req, res, next) => {
   const { itemId } = req.params;
   const { name, description, price, rarity, stats } = req.body;
 
-  const transaction = await prisma.$transaction(
-    async (prisma) => {
+  try {
+    // 트랜잭션을 사용하여 아이템 수정
+    const result = await prisma.$transaction(async (prisma) => {
       const itemToUpdate = await prisma.item.findUnique({
         where: { id: +itemId },
       });
@@ -80,11 +78,14 @@ router.patch("/:itemId", async (req, res, next) => {
       });
 
       return updatedItem;
-    },
-    {
-      isolation: prisma.TransactionIsolationLevel.ReadCommitted, // Read Committed
-    },
-  );
+    });
+
+    return res
+      .status(200)
+      .json({ message: "아이템이 성공적으로 수정되었습니다.", data: result });
+  } catch (error) {
+    next(error); // 에러 핸들러로 에러 전달
+  }
 
   return res
     .status(200)
