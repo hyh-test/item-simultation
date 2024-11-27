@@ -49,7 +49,7 @@ router.get("/:characterId", async (req, res, next) => {
 });
 
 //아이템 장착
-router.post("/:characterId", authMiddleware, async (req, res, next) => {
+router.post("/equip/:characterId", authMiddleware, async (req, res, next) => {
   try {
     const { characterId } = req.params; // URL 파라미터로 전달된 캐릭터 ID
     const { id: userId } = req.user; // 로그인한 유저의 ID (authMiddleware에서 제공)
@@ -110,7 +110,7 @@ router.post("/:characterId", authMiddleware, async (req, res, next) => {
     }
 
     // 아이템 능력치 확인 및 캐릭터 능력치 증가
-    const { attack, defense, health } = item;
+    const { attack, defense, health, name: itemName } = item;
 
     if (
       typeof attack !== "number" ||
@@ -121,6 +121,11 @@ router.post("/:characterId", authMiddleware, async (req, res, next) => {
       error.status = 400; // Bad Request
       return next(error);
     }
+
+    // 원래 캐릭터의 능력치를 저장
+    const originalAttack = character.attack;
+    const originalDefense = character.defense;
+    const originalHealth = character.health;
 
     // 캐릭터 능력치 증가
     const updatedCharacter = await prisma.character.update({
@@ -163,13 +168,19 @@ router.post("/:characterId", authMiddleware, async (req, res, next) => {
 
     // 응답 반환: 아이템 장착 후 캐릭터의 능력치와 메시지 반환
     res.status(200).json({
-      message: `${item.name} 아이템이 장착되었습니다.`,
+      message: `${itemName} 아이템이 장착되었습니다. 원래 능력치: 공격력 ${originalAttack}, 방어력 ${originalDefense}, 체력 ${originalHealth}. 장착 후 능력치: 공격력 ${updatedCharacter.attack}, 방어력 ${updatedCharacter.defense}, 체력 ${updatedCharacter.health}.`,
       character: {
         id: updatedCharacter.id,
         name: updatedCharacter.name,
         attack: updatedCharacter.attack,
         defense: updatedCharacter.defense,
         health: updatedCharacter.health,
+      },
+      item: {
+        name: itemName,
+        attack: item.attack,
+        defense: item.defense,
+        health: item.health,
       },
     });
   } catch (err) {
