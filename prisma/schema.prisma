@@ -1,8 +1,4 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+// This is your Prisma schema file
 
 generator client {
   provider = "prisma-client-js"
@@ -47,9 +43,10 @@ model Item {
   id              Int        @id @default(autoincrement()) @map("item_id") // 아이템 고유 ID
   name            String     @map("item_name") // 아이템 이름
   description     String     @map("item_description") @db.Text // 아이템 설명
-  type            String     @map("item_type") // 아이템 종류 (무기, 방어구, 소비 아이템 등)
   rarity          String     @map("item_rarity") // 아이템 희귀도
-  stats           Json       @map("item_stats") // 아이템 능력치
+  attack          Int        @default(0) @map("item_attack") // 아이템 공격력
+  defense         Int        @default(0) @map("item_defense") // 아이템 방어력
+  health          Int        @default(0) @map("item_health") // 아이템 체력
   price           Int        @map("item_price") // 아이템 가격
   createdAt       DateTime   @default(now()) @map("item_created_at") // 아이템 생성 시간
   updatedAt       DateTime   @updatedAt @map("item_updated_at") // 아이템 수정 시간
@@ -64,7 +61,6 @@ model Inventory {
   characterId Int        @map("character_id") // 캐릭터와의 관계
   itemId      Int        @map("item_id") // 아이템과의 관계
   quantity    Int        @default(1) @map("item_quantity") // 아이템 수량
-  equipped    Boolean    @default(false) @map("is_equipped") // 장착 여부
   addedAt     DateTime   @default(now()) @map("item_added_at") // 인벤토리에 추가된 시간
 
   character   Character  @relation(fields: [characterId], references: [id])
@@ -76,7 +72,6 @@ model EquippedItem {
   id          Int        @id @default(autoincrement()) @map("equipped_item_id") // 장착된 아이템 고유 ID
   characterId Int        @map("character_id") // 캐릭터와의 관계
   itemId      Int        @map("item_id") // 아이템과의 관계
-  slot        String     @map("item_slot") // 장착 위치 (예: 머리, 몸통, 다리 등)
   equippedAt  DateTime   @default(now()) @map("equipped_at") // 아이템 장착 시간
 
   character   Character  @relation(fields: [characterId], references: [id])
