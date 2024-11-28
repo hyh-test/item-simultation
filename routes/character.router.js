@@ -136,7 +136,7 @@ router.patch("/money/:characterId", authMiddleware, async (req, res, next) => {
   const addMoney = 100; // 고정된 추가 금액 100원
 
   try {
-    // 1. 요청한 캐릭터가 존재하는지 확인
+    // 요청한 캐릭터가 존재하는지 확인
     const character = await prisma.character.findUnique({
       where: {
         id: characterId,
@@ -150,17 +150,17 @@ router.patch("/money/:characterId", authMiddleware, async (req, res, next) => {
       throw error;
     }
 
-    // 2. 캐릭터가 현재 로그인된 사용자의 캐릭터인지 확인
+    // 캐릭터가 현재 로그인된 사용자의 캐릭터인지 확인
     if (character.userId !== userId) {
       const error = new Error("이 캐릭터는 사용자의 것이 아닙니다.");
       error.statusCode = 403; // 사용자의 것이 아니면 403 상태 코드
       throw error;
     }
 
-    // 3. 현재 금액 저장
+    //현재 금액 저장
     const currentMoney = character.money;
 
-    // 4. 돈 추가
+    //돈 추가
     const updatedCharacter = await prisma.character.update({
       where: { id: character.id },
       data: {
@@ -168,7 +168,6 @@ router.patch("/money/:characterId", authMiddleware, async (req, res, next) => {
       },
     });
 
-    // 5. 응답 반환: 추가 전 금액과 추가 후 금액을 포함한 메시지
     return res.status(200).json({
       message: `${addMoney}원이 추가되어서, 현재 금액은 ${currentMoney}에서 ${updatedCharacter.money}가 되었습니다.`,
       updatedCharacter,

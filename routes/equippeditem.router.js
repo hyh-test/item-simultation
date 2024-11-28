@@ -50,24 +50,29 @@ router.get("/:characterId", async (req, res, next) => {
 
 //아이템 장착
 router.post("/equip/:characterId", authMiddleware, async (req, res, next) => {
+  const { characterId } = req.params; // URL 파라미터로 전달된 캐릭터 ID
+  const { id: userId } = req.user; // 로그인한 유저의 ID (authMiddleware에서 제공)
+  const { itemId } = req.body; // 아이템 ID (바디로 전달받음)
   try {
-    const { characterId } = req.params; // URL 파라미터로 전달된 캐릭터 ID
-    const { id: userId } = req.user; // 로그인한 유저의 ID (authMiddleware에서 제공)
-    const { itemId } = req.body; // 아이템 ID (바디로 전달받음)
-
-    // 캐릭터를 찾고, 해당 캐릭터가 로그인한 유저의 것인지 확인
-    const character = await prisma.character.findFirst({
+    // 1. 요청한 캐릭터가 존재하는지 확인
+    const character = await prisma.character.findUnique({
       where: {
-        id: +characterId, // 캐릭터 ID가 요청된 ID와 일치하는지
-        userId: userId, // 로그인한 유저의 ID와 일치하는지 확인
+        id: +characterId,
       },
     });
 
-    // 캐릭터가 존재하지 않으면 오류 반환
+    // 캐릭터가 존재하지 않으면
     if (!character) {
-      const error = new Error("해당 캐릭터를 찾을 수 없습니다.");
-      error.status = 404; // Not Found
-      return next(error);
+      const error = new Error("캐릭터가 없습니다.");
+      error.statusCode = 404; // 캐릭터가 없으면 404 상태 코드
+      throw error;
+    }
+
+    // 캐릭터가 현재 로그인된 사용자의 캐릭터인지 확인
+    if (character.userId !== userId) {
+      const error = new Error("이 캐릭터는 사용자의 것이 아닙니다.");
+      error.statusCode = 403; // 사용자의 것이 아니면 403 상태 코드
+      throw error;
     }
 
     // 인벤토리에서 아이템 존재 여부 확인
@@ -79,7 +84,9 @@ router.post("/equip/:characterId", authMiddleware, async (req, res, next) => {
     });
 
     if (!itemInInventory) {
-      const error = new Error("이 아이템은 캐릭터의 인벤토리에 없는 아이템 입니다.");
+      const error = new Error(
+        "이 아이템은 캐릭터의 인벤토리에 없는 아이템 입니다.",
+      );
       error.status = 404; // Not Found
       return next(error);
     }
@@ -190,24 +197,29 @@ router.post("/equip/:characterId", authMiddleware, async (req, res, next) => {
 
 //아이템 탈착 기능
 router.post("/unequip/:characterId", authMiddleware, async (req, res, next) => {
+  const { characterId } = req.params; // URL 파라미터로 전달된 캐릭터 ID
+  const { id: userId } = req.user; // 로그인한 유저의 ID (authMiddleware에서 제공)
+  const { itemId } = req.body; // 아이템 ID (바디로 전달받음)
   try {
-    const { characterId } = req.params; // URL 파라미터로 전달된 캐릭터 ID
-    const { id: userId } = req.user; // 로그인한 유저의 ID (authMiddleware에서 제공)
-    const { itemId } = req.body; // 아이템 ID (바디로 전달받음)
-
-    // 캐릭터를 찾고, 해당 캐릭터가 로그인한 유저의 것인지 확인
-    const character = await prisma.character.findFirst({
+    // 1. 요청한 캐릭터가 존재하는지 확인
+    const character = await prisma.character.findUnique({
       where: {
-        id: +characterId, // 캐릭터 ID가 요청된 ID와 일치하는지
-        userId: userId, // 로그인한 유저의 ID와 일치하는지 확인
+        id: +characterId,
       },
     });
 
-    // 캐릭터가 존재하지 않으면 오류 반환
+    // 캐릭터가 존재하지 않으면
     if (!character) {
-      const error = new Error("해당 캐릭터를 찾을 수 없습니다.");
-      error.status = 404; // Not Found
-      return next(error);
+      const error = new Error("캐릭터가 없습니다.");
+      error.statusCode = 404; // 캐릭터가 없으면 404 상태 코드
+      throw error;
+    }
+
+    // 캐릭터가 현재 로그인된 사용자의 캐릭터인지 확인
+    if (character.userId !== userId) {
+      const error = new Error("이 캐릭터는 사용자의 것이 아닙니다.");
+      error.statusCode = 403; // 사용자의 것이 아니면 403 상태 코드
+      throw error;
     }
 
     // 장착된 아이템이 존재하는지 확인
@@ -306,6 +318,5 @@ router.post("/unequip/:characterId", authMiddleware, async (req, res, next) => {
     next(err); // 에러 핸들러로 에러 전달
   }
 });
-
 
 export default router;

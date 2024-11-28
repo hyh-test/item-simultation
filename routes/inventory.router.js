@@ -9,24 +9,30 @@ const router = express.Router();
 
 //인벤토리 조회
 router.get("/:characterId", authMiddleware, async (req, res, next) => {
-  try {
-    const { characterId } = req.params; // URL 파라미터로 전달된 캐릭터 ID
+  const { characterId } = req.params; // URL 파라미터로 전달된 캐릭터 ID
     const { id: userId } = req.user; // 로그인한 유저의 ID (authMiddleware에서 제공)
-
-    // 캐릭터를 찾고, 해당 캐릭터가 로그인한 유저의 것인지 확인
-    const character = await prisma.character.findFirst({
-      where: {
-        id: +characterId, // 캐릭터 ID가 요청된 ID와 일치하는지
-        userId: userId, // 로그인한 유저의 ID와 일치하는지 확인
-      },
-    });
-
-    // 캐릭터가 존재하지 않으면 오류 반환
-    if (!character) {
-      const error = new Error("해당 캐릭터를 찾을 수 없습니다.");
-      error.status = 404; // Not Found
-      return next(error);
-    }
+    try {
+      // 1. 요청한 캐릭터가 존재하는지 확인
+      const character = await prisma.character.findUnique({
+        where: {
+          id: +characterId,
+        },
+      });
+  
+      // 캐릭터가 존재하지 않으면
+      if (!character) {
+        const error = new Error("캐릭터가 없습니다.");
+        error.statusCode = 404; // 캐릭터가 없으면 404 상태 코드
+        throw error;
+      }
+  
+      // 2. 캐릭터가 현재 로그인된 사용자의 캐릭터인지 확인
+      if (character.userId !== userId) {
+        const error = new Error("이 캐릭터는 사용자의 것이 아닙니다.");
+        error.statusCode = 403; // 사용자의 것이 아니면 403 상태 코드
+        throw error;
+      }
+  
 
     // 캐릭터의 인벤토리 조회
     const inventoryData = await prisma.inventory.findMany({

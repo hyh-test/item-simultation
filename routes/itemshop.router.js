@@ -17,7 +17,7 @@ router.post("/buy/:characterId", authMiddleware, async (req, res, next) => {
     // 1. 요청한 캐릭터가 존재하는지 확인
     const character = await prisma.character.findUnique({
       where: {
-        id: characterId,
+        id: +characterId,
       },
     });
 
@@ -123,7 +123,7 @@ router.patch("/sell/:characterId", authMiddleware, async (req, res, next) => {
     // 1. 요청한 캐릭터가 존재하는지 확인
     const character = await prisma.character.findUnique({
       where: {
-        id: characterId,
+        id: +characterId,
       },
     });
 
@@ -155,8 +155,8 @@ router.patch("/sell/:characterId", authMiddleware, async (req, res, next) => {
     // 3. 캐릭터의 인벤토리에서 해당 아이템이 있는지 확인
     const inventoryItem = await prisma.inventory.findFirst({
       where: {
-        characterId: character.id,
-        itemId: item.id,
+        characterId: +character.id,
+        itemId: +item.id,
       },
     });
 
