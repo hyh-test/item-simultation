@@ -70,7 +70,20 @@ router.delete("/:characterId", authMiddleware, async (req, res, next) => {
         throw error; // 트랜잭션 롤백
       }
 
-      // 캐릭터 삭제
+      // 1. 해당 캐릭터를 참조하는 Inventory와 EquippedItem에서 관련된 레코드 삭제
+      await prisma.inventory.deleteMany({
+        where: {
+          characterId: +characterId, // characterId로 참조된 레코드 삭제
+        },
+      });
+
+      await prisma.equippedItem.deleteMany({
+        where: {
+          characterId: +characterId, // characterId로 참조된 레코드 삭제
+        },
+      });
+
+      // 2. 캐릭터 삭제
       await prisma.character.delete({
         where: {
           id: +characterId,
@@ -80,6 +93,7 @@ router.delete("/:characterId", authMiddleware, async (req, res, next) => {
 
     return res.status(200).json({ message: "캐릭터가 삭제되었습니다." });
   } catch (error) {
+    console.error('Error occurred while deleting character:', error);
     next(error);
   }
 });
@@ -127,8 +141,7 @@ router.get("/:characterId", authMiddleware, async (req, res, next) => {
   }
 });
 
-
-//캐릭터 돈 추가 api 
+//캐릭터 돈 추가 api
 router.patch("/money/:characterId", authMiddleware, async (req, res, next) => {
   const characterId = parseInt(req.params.characterId); // URL 파라미터에서 캐릭터 ID를 받음
   const userId = req.user.id; // 인증된 사용자의 ID (authMiddleware에서 설정됨)
@@ -164,7 +177,7 @@ router.patch("/money/:characterId", authMiddleware, async (req, res, next) => {
     const updatedCharacter = await prisma.character.update({
       where: { id: character.id },
       data: {
-        money: currentMoney + addMoney,  // 고정된 100원을 추가
+        money: currentMoney + addMoney, // 고정된 100원을 추가
       },
     });
 
@@ -176,7 +189,5 @@ router.patch("/money/:characterId", authMiddleware, async (req, res, next) => {
     next(error); // 에러 핸들러로 전달
   }
 });
-
-
 
 export default router;
