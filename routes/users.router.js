@@ -74,17 +74,37 @@ router.post("/sign-in", async (req, res, next) => {
       return next(error);
     }
 
-    // JWT 생성
-    const token = jwt.sign({ userId: user.id }, process.env.JWT_KEY);
+    // 액세스 토큰 생성 (짧은 유효 기간)
+    const accessToken = jwt.sign({ userId: user.id }, process.env.JWT_ACCESS_KEY, {
+      expiresIn: '15m',  // 액세스 토큰 유효 시간: 15분
+    });
 
-    // 쿠키에 JWT 토큰 저장
-    res.cookie("authorization", `Bearer ${token}`);
+    // 리프레시 토큰 생성 (긴 유효 기간)
+    const refreshToken = jwt.sign({ userId: user.id }, process.env.JWT_REFRESH_KEY, {
+      expiresIn: '7d',  // 리프레시 토큰 유효 시간: 7일
+    });
 
+    // 리프레시 토큰을 쿠키에 저장
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,   // 클라이언트에서 접근 불가
+      secure: process.env.NODE_ENV === 'production', // HTTPS일 때만 전송
+      maxAge: 7 * 24 * 60 * 60 * 1000,  // 7일
+    });
+
+    // 액세스 토큰을 HTTP-only 쿠키에 저장
+    res.cookie("accessToken", accessToken, {
+      httpOnly: true,   // 클라이언트에서 접근 불가
+      secure: process.env.NODE_ENV === 'production', // HTTPS일 때만 전송
+      maxAge: 15 * 60 * 1000,  // 15분
+    });
+
+    // 응답에는 메시지만 반환 (토큰은 클라이언트의 쿠키에 저장됨)
     return res.status(200).json({ message: "로그인이 완료되었습니다." });
   } catch (error) {
     next(error);
   }
 });
+
 
 
 /* 유저 정보 api */
