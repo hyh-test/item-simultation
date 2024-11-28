@@ -8,7 +8,7 @@ const router = express.Router();
 
 //아이템 생성
 router.post("/create", async (req, res, next) => {
-  const { name, price, rarity, attack, defense, health, type, description } =
+  const { name, price, rarity, attack, defense, health, description } =
     req.body;
 
   try {
@@ -34,7 +34,6 @@ router.post("/create", async (req, res, next) => {
           attack, // 아이템 공격력
           defense, // 아이템 방어력
           health, // 아이템 체력
-          type, // 아이템 타입
           description, // 아이템 설명
         },
       });
