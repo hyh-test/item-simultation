@@ -61,7 +61,7 @@ router.post("/sign-in", async (req, res, next) => {
     const user = await prisma.users.findFirst({ where: { email } });
 
     if (!user) {
-      const error = new Error("존재하지 않는 이메일입니다.");
+      const error = new Error("사용자 정보가 일치하지 않습니다.");
       error.status = 401; // Unauthorized
       return next(error);
     }
@@ -69,27 +69,28 @@ router.post("/sign-in", async (req, res, next) => {
     // 비밀번호 확인
     const passwordMatch = await bcrypt.compare(password, user.password);
     if (!passwordMatch) {
-      const error = new Error("비밀번호가 일치하지 않습니다.");
+      const error = new Error("사용자 정보가 일치하지 않습니다.");
       error.status = 401; // Unauthorized
       return next(error);
     }
 
-    // JWT 생성 (만료 시간 추가)
+    // JWT 생성
     const token = jwt.sign(
       { userId: user.id },
       process.env.JWT_KEY,
-      { expiresIn: '1h' }  // 1시간 후 만료
+      { expiresIn: "1h" }, // 토큰 만료 시간 1시간 설정
     );
 
     // 쿠키에 JWT 토큰 저장
-    res.cookie("authorization", `Bearer ${token}`, { httpOnly: true, secure: true });
+    res.cookie("authorization", `Bearer ${token}`, {
+      maxAge: 3600000     // 쿠키 만료 시간 (1시간)
+    });
 
     return res.status(200).json({ message: "로그인이 완료되었습니다." });
   } catch (error) {
     next(error);
   }
 });
-
 
 /* 유저 정보 api */
 router.get("/users", authMiddleware, async (req, res, next) => {
