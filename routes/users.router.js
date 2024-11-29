@@ -74,11 +74,15 @@ router.post("/sign-in", async (req, res, next) => {
       return next(error);
     }
 
-    // JWT 생성
-    const token = jwt.sign({ userId: user.id }, process.env.JWT_KEY);
+    // JWT 생성 (만료 시간 추가)
+    const token = jwt.sign(
+      { userId: user.id },
+      process.env.JWT_KEY,
+      { expiresIn: '1h' }  // 1시간 후 만료
+    );
 
     // 쿠키에 JWT 토큰 저장
-    res.cookie("authorization", `Bearer ${token}`);
+    res.cookie("authorization", `Bearer ${token}`, { httpOnly: true, secure: true });
 
     return res.status(200).json({ message: "로그인이 완료되었습니다." });
   } catch (error) {
